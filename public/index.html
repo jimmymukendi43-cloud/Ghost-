@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Ghost Music</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: #000;
+      color: #fff;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+    #bg-image {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background-size: cover;
+      background-position: center;
+      filter: blur(35px) brightness(0.45);
+      transform: scale(1.1);
+      z-index: 0;
+      transition: background-image 0.8s ease;
+      background-color: #121212;
+    }
+    #app {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      max-width: 500px;
+      margin: 0 auto;
+      background: rgba(0,0,0,0.3);
+      backdrop-filter: blur(5px);
+    }
+    #content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 15px 10px;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    #content::-webkit-scrollbar { display: none; }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .logo {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: #fff;
+    }
+    .filters {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 25px;
+    }
+    .filter-btn {
+      background: rgba(255,255,255,0.15);
+      border: none;
+      color: #fff;
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .filter-btn.active {
+      background: #fff;
+      color: #000;
+    }
+    .section-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 15px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 25px;
+    }
+    .track-card {
+      background: rgba(255,255,255,0.08);
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: background 0.2s;
+      display: flex;
+      flex-direction: column;
+    }
+    .track-card:active { background: rgba(255,255,255,0.15); }
+    .track-card img {
+      width: 100%;
+      aspect-ratio: 1/1;
+      object-fit: cover;
+      display: block;
+    }
+    .track-info { padding: 10px; }
+    .track-title {
+      font-weight: 600;
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: block;
+    }
+    .track-artist {
+      font-size: 12px;
+      color: #b3b3b3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: block;
+    }
+    .recommendation-banner {
+      background: rgba(255,255,255,0.1);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 25px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+    }
+    .recommendation-banner img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+    }
+    .recommendation-banner .rec-info { padding: 15px; }
+    .rec-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #b3b3b3;
+    }
+    .rec-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-top: 5px;
+    }
+    .search-bar { margin-bottom: 20px; margin-top: 10px; }
+    .search-bar input {
+      width: 100%;
+      padding: 14px 18px;
+      border-radius: 25px;
+      border: none;
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      font-size: 16px;
+      outline: none;
+    }
+    .search-bar input::placeholder { color: #aaa; }
+    #mini-player {
+      background: rgba(20,20,20,0.95);
+      backdrop-filter: blur(10px);
+      padding: 0 15px;
+      height: 60px;
+      display: none;
+      align-items: center;
+      gap: 12px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      position: relative;
+    }
+    #mini-player.active { display: flex; }
+    #mini-player img {
+      width: 40px;
+      height: 40px;
+      border-radius: 4px;
+      object-fit: cover;
+    }
+    .mini-info { flex: 1; min-width: 0; }
+    .mini-title {
+      font-size: 14px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .mini-artist {
+      font-size: 12px;
+      color: #b3b3b3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .mini-controls {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .play-pause-btn {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 24px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+    }
+    #progress-bar {
+      position: absolute;
+      top: -2px;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      -webkit-appearance: none;
+      background: rgba(255,255,255,0.2);
+      border: none;
+      outline: none;
+    }
+    #progress-bar::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #1DB954;
+      cursor: pointer;
+    }
+    #progress-bar::-moz-range-thumb {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #1DB954;
+      cursor: pointer;
+      border: none;
+    }
+    #bottom-nav {
+      background: rgba(10,10,10,0.95);
+      backdrop-filter: blur(10px);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      height: 55px;
+      padding-bottom: env(safe-area-inset-bottom);
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      color: #b3b3b3;
+      font-size: 10px;
+      cursor: pointer;
+      transition: color 0.2s;
+      background: none;
+      border: none;
+    }
+    .nav-item.active { color: #fff; }
+    .nav-item svg { width: 24px; height: 24px; fill: currentColor; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div id="bg-image"></div>
+  <div id="app">
+    <div id="content">
+      <div id="home-page">
+        <div class="header">
+          <span class="logo">Ghost</span>
+          <span style="color:#b3b3b3;">⚙️</span>
+        </div>
+        <div class="filters">
+          <button class="filter-btn active" onclick="setFilter('all')">Tout</button>
+          <button class="filter-btn" onclick="setFilter('music')">Musique</button>
+        </div>
+        <div class="section-title">Récemment écoutés</div>
+        <div class="grid" id="recent-grid"></div>
+        <div class="recommendation-banner" id="recommendation-banner">
+          <img id="rec-img" src="" alt="Recommandation">
+          <div class="rec-info">
+            <span class="rec-label">Recommandé pour vous</span>
+            <div class="rec-title" id="rec-title"></div>
+            <div class="rec-artist" id="rec-artist" style="color:#b3b3b3; font-size:14px;"></div>
+          </div>
+        </div>
+      </div>
+      <div id="search-page" class="hidden">
+        <div class="search-bar">
+          <input type="text" id="search-input" placeholder="Artistes, titres ou podcasts" autocomplete="off">
+        </div>
+        <div class="grid" id="search-results-grid"></div>
+      </div>
+    </div>
+
+    <div id="mini-player">
+      <input type="range" id="progress-bar" min="0" max="100" value="0" step="0.1">
+      <img id="mini-player-img" src="" alt="cover">
+      <div class="mini-info">
+        <div class="mini-title" id="mini-player-title"></div>
+        <div class="mini-artist" id="mini-player-artist"></div>
+      </div>
+      <div class="mini-controls">
+        <button class="play-pause-btn" id="play-pause-btn">
+          <svg id="icon-play" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          <svg id="icon-pause" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <nav id="bottom-nav">
+      <button class="nav-item active" id="nav-home" onclick="switchView('home')">
+        <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        <span>Accueil</span>
+      </button>
+      <button class="nav-item" id="nav-search" onclick="switchView('search')">
+        <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        <span>Rechercher</span>
+      </button>
+      <button class="nav-item" id="nav-library">
+        <svg viewBox="0 0 24 24"><path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm12 2.5V9h-3v2h3v2l2.5-2.5L16 8.5z"/></svg>
+        <span>Bibliothèque</span>
+      </button>
+    </nav>
+  </div>
+
+  <audio id="silentBGAudio" loop style="display: none;" src="data:audio/wav;base64,UklGRigAAABXQVZFlZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZ"></audio>
+
+  <script>
+    let currentTrack = null;
+    let isPlaying = false;
+    let audio = new Audio();
+    const silentAudio = document.getElementById('silentBGAudio'); // Liaison du contournement
+    let currentView = 'home';
+    let homeTracks = [];
+    let recommendationTrack = null;
+
+    const homePage = document.getElementById('home-page');
+    const searchPage = document.getElementById('search-page');
+    const searchInput = document.getElementById('search-input');
+    const searchResultsGrid = document.getElementById('search-results-grid');
+    const recentGrid = document.getElementById('recent-grid');
+    const recBanner = document.getElementById('recommendation-banner');
+    const recImg = document.getElementById('rec-img');
+    const recTitle = document.getElementById('rec-title');
+    const recArtist = document.getElementById('rec-artist');
+    const miniPlayer = document.getElementById('mini-player');
+    const miniPlayerImg = document.getElementById('mini-player-img');
+    const miniPlayerTitle = document.getElementById('mini-player-title');
+    const miniPlayerArtist = document.getElementById('mini-player-artist');
+    const playPauseBtn = document.getElementById('play-pause-btn');
+    const iconPlay = document.getElementById('icon-play');
+    const iconPause = document.getElementById('icon-pause');
+    const progressBar = document.getElementById('progress-bar');
+    const bgImage = document.getElementById('bg-image');
+    const navHome = document.getElementById('nav-home');
+    const navSearch = document.getElementById('nav-search');
+
+    // Force l'appareil à rester éveillé en arrière-plan
+    function activateBackgroundMode() {
+      silentAudio.play().catch(e => console.log("Attente interaction"));
+      if ('wakeLock' in navigator) {
+        try { navigator.wakeLock.request('screen'); } catch (err) {}
+      }
+    }
+
+    async function init() {
+      try {
+        const res = await fetch('/search?q=trending music 2025');
+        homeTracks = await res.json();
+        if (homeTracks.length > 0) {
+          renderHomeTracks(homeTracks);
+          setRecommendation(homeTracks[0]);
+        }
+      } catch (e) {
+        console.error('Erreur chargement pistes par défaut', e);
+      }
+    }
+
+    function renderHomeTracks(tracks) {
+      recentGrid.innerHTML = tracks.map(track => `
+        <div class="track-card" data-id="${track.id}" data-title="${escapeHtml(track.title)}" data-artist="${escapeHtml(track.artist)}" data-thumb="${track.thumbnail}">
+          <img src="${track.thumbnail}" alt="">
+          <div class="track-info">
+            <span class="track-title">${escapeHtml(track.title)}</span>
+            <span class="track-artist">${escapeHtml(track.artist)}</span>
+          </div>
+        </div>
+      `).join('');
+      document.querySelectorAll('#recent-grid .track-card').forEach(card => {
+        card.addEventListener('click', () => {
+          playTrack(card.dataset.id, card.dataset.title, card.dataset.artist, card.dataset.thumb);
+        });
+      });
+    }
+
+    function setRecommendation(track) {
+      recommendationTrack = track;
+      recImg.src = track.thumbnail;
+      recTitle.textContent = track.title;
+      recArtist.textContent = track.artist;
+      recBanner.onclick = () => playTrack(track.id, track.title, track.artist, track.thumbnail);
+    }
+
+    function playTrack(id, title, artist, thumbnail) {
+      activateBackgroundMode(); // Activation de la sécurité anti-veille
+      currentTrack = { id, title, artist, thumbnail };
+      miniPlayerImg.src = thumbnail;
+      miniPlayerTitle.textContent = title;
+      miniPlayerArtist.textContent = artist;
+      miniPlayer.classList.add('active');
+      updateBackground(thumbnail);
+      audio.src = `/stream?id=${id}`;
+      audio.load();
+      audio.play().then(() => {
+        isPlaying = true;
+        updatePlayPauseIcon();
+      }).catch(err => {
+        console.error('Erreur lecture:', err);
+        alert('Impossible de lire ce morceau.');
+      });
+
+      // Liaison avec le lecteur de l'écran de verrouillage du smartphone
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: title,
+          artist: artist,
+          artwork: [{ src: thumbnail, sizes: '300x300', type: 'image/jpeg' }]
+        });
+        navigator.mediaSession.setActionHandler('play', () => togglePlayPause());
+        navigator.mediaSession.setActionHandler('pause', () => togglePlayPause());
+      }
+    }
+
+    function updateBackground(thumbnail) {
+      bgImage.style.backgroundImage = `url(${thumbnail})`;
+    }
+
+    function togglePlayPause() {
+      if (!currentTrack) return;
+      if (isPlaying) {
+        audio.pause();
+        silentAudio.pause();
+        isPlaying = false;
+      } else {
+        activateBackgroundMode();
+        audio.play().then(() => {
+          isPlaying = true;
+        }).catch(err => console.error('Reprise échouée', err));
+        isPlaying = true;
+      }
+      updatePlayPauseIcon();
+    }
+
+    function updatePlayPauseIcon() {
+      iconPlay.style.display = isPlaying ? 'none' : 'block';
+      iconPause.style.display = isPlaying ? 'block' : 'none';
+    }
+
+    audio.addEventListener('timeupdate', () => {
+      if (audio.duration) {
+        progressBar.value = (audio.currentTime / audio.duration) * 100;
+      }
+    });
+    audio.addEventListener('loadedmetadata', () => {
+      progressBar.max = 100;
+      progressBar.value = 0;
+    });
+    audio.addEventListener('ended', () => {
+      isPlaying = false;
+      updatePlayPauseIcon();
+    });
+    audio.addEventListener('play', () => { isPlaying = true; updatePlayPauseIcon(); });
+    audio.addEventListener('pause', () => { isPlaying = false; updatePlayPauseIcon(); });
+
+    progressBar.addEventListener('input', () => {
+      if (audio.duration) {
+        audio.currentTime = (progressBar.value / 100) * audio.duration;
+      }
+    });
+
+    playPauseBtn.addEventListener('click', togglePlayPause);
+
+    window.switchView = function(view) {
+      currentView = view;
+      if (view === 'home') {
+        homePage.classList.remove('hidden');
+        searchPage.classList.add('hidden');
+        navHome.classList.add('active');
+        navSearch.classList.remove('active');
+      } else {
+        homePage.classList.add('hidden');
+        searchPage.classList.remove('hidden');
+        navSearch.classList.add('active');
+        navHome.classList.remove('active');
+        searchInput.focus();
+      }
+    };
+
+    searchInput.addEventListener('keyup', async (e) => {
+      const query = searchInput.value.trim();
+      if (query.length < 2) {
+        searchResultsGrid.innerHTML = '';
+        return;
+      }
+      if (e.key === 'Enter' || query.length >= 2) {
+        try {
+          const res = await fetch(`/search?q=${encodeURIComponent(query)}`);
+          const results = await res.json();
+          renderSearchResults(results);
+        } catch (err) {
+          console.error('Search error', err);
+        }
+      }
+    });
+
+    function renderSearchResults(tracks) {
+      searchResultsGrid.innerHTML = tracks.map(track => `
+        <div class="track-card" data-id="${track.id}" data-title="${escapeHtml(track.title)}" data-artist="${escapeHtml(track.artist)}" data-thumb="${track.thumbnail}">
+          <img src="${track.thumbnail}" alt="">
+          <div class="track-info">
+            <span class="track-title">${escapeHtml(track.title)}</span>
+            <span class="track-artist">${escapeHtml(track.artist)}</span>
+          </div>
+        </div>
+      `).join('');
+      document.querySelectorAll('#search-results-grid .track-card').forEach(card => {
+        card.addEventListener('click', () => {
+          playTrack(card.dataset.id, card.dataset.title, card.dataset.artist, card.dataset.thumb);
+        });
+      });
+    }
+
+    function escapeHtml(text) {
+      return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
+    window.setFilter = function(type) {
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      if (type === 'all') {
+        document.querySelector('.filter-btn:nth-child(1)').classList.add('active');
+      } else {
+        document.querySelector('.filter-btn:nth-child(2)').classList.add('active');
+      }
+    };
+
+    init();
+  </script>
+</body>
+</html>
