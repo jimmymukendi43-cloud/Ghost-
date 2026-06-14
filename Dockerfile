@@ -1,8 +1,14 @@
-FROM node:20
+FROM node:20-bullseye
 
-RUN apt-get update && apt-get install -y python3 python3-pip yt-dlp
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    ffmpeg \
+    && pip3 install yt-dlp \
+    && ln -s /usr/bin/python3 /usr/bin/python
 
 WORKDIR /app
-COPY . .
+COPY package*.json ./
 RUN npm install
+COPY . .
 CMD ["node", "server.js"]
