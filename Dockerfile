@@ -1,11 +1,10 @@
-FROM node:20-bullseye
+FROM python:3.11-slim
 
 RUN apt-get update && apt-get install -y \
-    python3 \
-    python3-pip \
-    ffmpeg \
-    && pip3 install yt-dlp \
-    && ln -s /usr/bin/python3 /usr/bin/python
+    curl ffmpeg \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
+    && pip install yt-dlp
 
 WORKDIR /app
 COPY package*.json ./
